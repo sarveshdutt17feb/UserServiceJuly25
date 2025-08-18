@@ -6,6 +6,8 @@ import com.sarvesh.userservicejul25.models.Token;
 import com.sarvesh.userservicejul25.models.User;
 import com.sarvesh.userservicejul25.repositories.TokenRepository;
 import com.sarvesh.userservicejul25.repositories.UserRepository;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
@@ -15,9 +17,11 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
     private TokenRepository tokenRepository;
-    public UserServiceImpl(UserRepository userRepository,TokenRepository tokenRepository){
+    private BCryptPasswordEncoder passwordEncoder;
+    public UserServiceImpl(UserRepository userRepository,TokenRepository tokenRepository,BCryptPasswordEncoder passwordEncoder){
         this.userRepository= userRepository;
         this.tokenRepository=tokenRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -28,12 +32,12 @@ public class UserServiceImpl implements UserService {
             throw new UserNotFoundException("user with email "+email+"not found");
         }
         User user = optionalUser.get();
-        if(user.getPassword().equals(password)){
+        if(passwordEncoder.matches(password,user.getPassword())){
             //login successful, create token
 
             Token token = new Token();
             token.setUser(user);
-            token.setValue("absbvdhccsvnvcvhvdvdvhvdhvdhvdgh");
+            token.setValue(RandomStringUtils.randomAlphanumeric(128));
 
             Date currentDate = new Date();
             Calendar calendar = Calendar.getInstance();
@@ -47,7 +51,7 @@ public class UserServiceImpl implements UserService {
 
 
 
-            token.setExpiryAt(dateAfter30Days);
+            token.setExpiryDate(dateAfter30Days);
             return tokenRepository.save(token);
 
         }
@@ -67,7 +71,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(email);
         user.setName(name);
         //TODO - we should store the password in encoded format using Bcrypt Password Encoder
-        user.setPassword(password);
+        user.setPassword(passwordEncoder.encode(password));
 
 
         return userRepository.save(user);
@@ -77,16 +81,15 @@ public class UserServiceImpl implements UserService {
     public User validateToken(String tokenValue) {
         //check if the token is present in db, token is not deleted
         //token's expiry time is greater than the current time.
-        Optional<Token> optionalToken = tokenRepository.findByValueAndDeletedAndExpiryAtGreaterThan(
+        Optional<Token> optionalToken = tokenRepository.findByValueAndDeletedAndExpiryDateGreaterThan(
                 tokenValue,
                 false,
                 new Date());
-        if(optionalToken.isEmpty()){
-            //token is not present in db
-            //token invalid
-            return null;
+        if(optionalToken.isPresent()){
+            System.out.println(optionalToken.get());
         }
-        return optionalToken.get().getUser();
+
+        return optionalToken.map(Token::getUser).orElse(null);
     }
 
     @Override

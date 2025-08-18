@@ -49,7 +49,7 @@ public class UserController {
     @GetMapping("/validate/{token}")
     public UserDto validateToken(@PathVariable("token") String token ){
         User user = userService.validateToken(token);
-
+        System.out.println(user);
         return UserDto.from(user);
     }
 }
