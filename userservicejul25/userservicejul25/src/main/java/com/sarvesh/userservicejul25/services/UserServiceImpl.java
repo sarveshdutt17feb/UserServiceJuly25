@@ -10,6 +10,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Optional;
@@ -70,6 +71,7 @@ public class UserServiceImpl implements UserService {
         User user = new User();
         user.setEmail(email);
         user.setName(name);
+        user.setRoles(new ArrayList<>());
         //TODO - we should store the password in encoded format using Bcrypt Password Encoder
         user.setPassword(passwordEncoder.encode(password));
 

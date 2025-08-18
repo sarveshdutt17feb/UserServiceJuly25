@@ -31,12 +31,14 @@ public class UserController {
     return UserDto.from(user);
     }
     @PostMapping("/login")
-    public Token login(@RequestBody LoginRequestDto requestDto) throws UserNotFoundException, UnAuthorizedException {
+    public LoginResponseDto login(@RequestBody LoginRequestDto requestDto) throws UserNotFoundException, UnAuthorizedException {
         Token token = userService.login(
                 requestDto.getEmail(),
                 requestDto.getPassword()
         );
-        return token;
+        LoginResponseDto loginResponseDto = new LoginResponseDto();
+        loginResponseDto.setTokenValue(token.getValue());
+        return loginResponseDto;
     }
     @GetMapping("/logout")
     public ResponseEntity<Void> logout(@RequestBody LogoutRequestDto requestDto){
